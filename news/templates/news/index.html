@@ -1,0 +1,57 @@
+{% extends 'news/default.html' %}
+{% load custom_filters %}
+{% block title %}
+News
+{% endblock title %}
+<hr>
+{% block content %}
+<h3>{{ time_now|date:'d M Y' }}</h3>
+   <form action="" method="get">
+       {# Переменная, которую мы передали через контекст, может сгенерировать нам форму с полями #}
+       {{ filterset.form.as_p }}
+       {# Добавим кнопку отправки данных формы #}
+       <input type="submit" value="Найти" />
+   </form>
+<h2> Количество постов {{ news|length}}</h2>
+<hr>
+{% if news %}
+<table style="margin-left: auto; margin-right: auto;">
+  <tr>
+      <td style="width: 200px;"><u>Заголовок</u></td>
+      <td style="width: 200px;"><u>Дата публикации</u></td>
+      <td style="width: 200px;"><u>Содержание</u></td>
+  </tr>
+  {% for new in news %}
+  <tr>
+      <td style="width: 200px;">{{ new.title|censor }}</td>
+      <td style="width: 200px;">{{ new.dateCreation|date:'d M Y' }}</td>
+      <td style="width: 200px;">{{ new.text|censor|truncatechars:20}}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<h3>Публикаций нет!</h3>
+{% endif %}
+   {# Добавляем пагинацию на страницу #}
+
+   {# Информация о предыдущих страницах #}
+
+   {% if page_obj.has_previous %}
+       <a href="?page=1">1</a>
+       {% if page_obj.previous_page_number != 1 %}
+           ...
+           <a href="?page={{ page_obj.previous_page_number }}">{{ page_obj.previous_page_number }}</a>
+       {% endif %}
+   {% endif %}
+
+   {{ page_obj.number }}
+
+   {% if page_obj.has_next %}
+       <a href="?page={{ page_obj.next_page_number }}">{{ page_obj.next_page_number }}</a>
+       {% if paginator.num_pages != page_obj.next_page_number %}
+           ...
+           <a href="?page={{ page_obj.paginator.num_pages }}">{{ page_obj.paginator.num_pages }}</a>
+       {% endif %}
+   {% endif %}
+
+{% endblock content %}
