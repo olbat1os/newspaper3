@@ -6,12 +6,20 @@ News
 <hr>
 {% block content %}
 <h3>{{ time_now|date:'d M Y' }}</h3>
+{% if perms.news.add_post %}
+<hr>
+<a href="{% url 'news_create'  %}">Написать новость</a>
+<hr>
+<a href="{% url 'articles_create' %}">Написать статью</a>
+{% endif %}
+<hr>
    <form action="" method="get">
        {# Переменная, которую мы передали через контекст, может сгенерировать нам форму с полями #}
        {{ filterset.form.as_p }}
        {# Добавим кнопку отправки данных формы #}
        <input type="submit" value="Найти" />
    </form>
+
 <h2> Количество постов {{ news|length}}</h2>
 <hr>
 {% if news %}
@@ -26,6 +34,15 @@ News
       <td style="width: 200px;">{{ new.title|censor }}</td>
       <td style="width: 200px;">{{ new.dateCreation|date:'d M Y' }}</td>
       <td style="width: 200px;">{{ new.text|censor|truncatechars:20}}</td>
+      <td>
+      {% if perms.news.change_post %}
+          {% if post.categoryType == 'NW' %}
+          <td><a href="{% url 'news_update' new.id %}">Обновить</a></td>
+          {% else %}
+          <td><a href="{% url 'articles_update' new.id %}">Обновить</a></td>
+          {% endif %}
+      {% endif %}
+      </td>
   </tr>
   {% endfor %}
 </table>
