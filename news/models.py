@@ -3,7 +3,9 @@ from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.urls import reverse
-
+from django.core.cache import cache
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 
 class Author(models.Model):
     authorUser = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -66,6 +68,23 @@ class Post(models.Model):
     def __str__(self):
         return f'{self.name.title()}: {self.text[:10]}'
 
+    class Meta:
+        verbose_name = "Публикация"
+        verbose_name_plural = 'Публикации'
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        cache.delete(f'post-{self.pk}')
+
+@receiver(post_save, sender=Post)
+def send_notification_on_post_create(sender, instance, created, **kwargs):
+    """
+    Отправка уведомления при создании новой статьи
+    """
+    if created:
+        from .tasks import send_notification  # Импорт здесь, чтобы избежать циклической зависимости
+        send_notification.delay(instance.id)
+
 class PostCategory(models.Model):
     postThrough = models.ForeignKey(Post, on_delete=models.CASCADE)
     categoryThrough = models.ForeignKey(Category, on_delete=models.CASCADE)
@@ -85,3 +104,15 @@ class Comment(models.Model):
     def dislike(self):
         self.rating -= 1
         self.save()
+
+class Subscription(models.Model):
+    user = models.ForeignKey(
+        to=User,
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+    )
+    category = models.ForeignKey(
+        to='Category',
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+    )
